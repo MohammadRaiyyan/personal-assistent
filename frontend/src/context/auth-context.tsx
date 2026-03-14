@@ -20,13 +20,45 @@ export type AuthContextType = {
   login: (payload: LoginSchemaType) => Promise<void>
   signup: (payload: SignupSchemaType) => Promise<void>
   logout: () => Promise<void>
+  loginWithProvider: (provider: 'github' | 'google') => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 function AuthContextProvider({ children }: { children: ReactNode }) {
-  const { data, isPending, error } = authClient.useSession()
-  console.log('data,error', data, error)
+  const { data, isPending } = authClient.useSession()
+
+  const login = useCallback(async (payload: LoginSchemaType) => {
+    const { error } = await authClient.signIn.email(payload)
+    if (error) throw new Error(error.message)
+  }, [])
+  const signup = useCallback(async (payload: SignupSchemaType) => {
+    const { error } = await authClient.signUp.email(payload)
+    if (error) throw new Error(error.message)
+  }, [])
+  const logout = useCallback(async () => {
+    const { error } = await authClient.signOut()
+    if (error) throw new Error(error.message)
+  }, [])
+  const loginWithProvider = useCallback(
+    async (provider: 'github' | 'google') => {
+      await authClient.signIn.social({ provider, callbackURL: '/app' })
+    },
+    [],
+  )
+
+  const value = useMemo(
+    () => ({
+      session: data,
+      isAuthenticated: Boolean(data),
+      login,
+      logout,
+      signup,
+      loginWithProvider,
+    }),
+    [data, login, logout, signup, loginWithProvider],
+  ) satisfies AuthContextType
+
   if (isPending) {
     return (
       <div className="flex items-center gap-4">
@@ -34,29 +66,6 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       </div>
     )
   }
-  //   if (error) {
-  //     return <Navigate to="/auth/login" />
-  //   }
-
-  const login = useCallback(async (payload: LoginSchemaType) => {
-    await authClient.signIn.email(payload)
-  }, [])
-  const signup = useCallback(async (payload: SignupSchemaType) => {
-    await authClient.signUp.email(payload)
-  }, [])
-  const logout = useCallback(async () => {
-    await authClient.signOut()
-  }, [])
-
-  const value = useMemo(() => {
-    return {
-      session: data,
-      isAuthenticated: true,
-      login: login,
-      logout: logout,
-      signup: signup,
-    }
-  }, [data, login, logout, signup]) satisfies AuthContextType
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

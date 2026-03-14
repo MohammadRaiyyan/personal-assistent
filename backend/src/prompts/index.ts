@@ -1,13 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
-import "dotenv";
 
-const apiKey = process.env.GOOGLE_API_KEY || "";
 class AIClient {
   private client: GoogleGenAI;
   constructor() {
     this.client = new GoogleGenAI({
       vertexai: false,
-      apiKey
+      apiKey: process.env.GEMINI_API_KEY ?? "",
     });
   }
   generate(prompt: string) {
@@ -20,7 +18,7 @@ type GenerateInsightProps = {
   industry: string,
   skills: string[],
   experience: number,
-  country: string
+  country: string | null
 }
 
 type InsightResponse = {
@@ -35,24 +33,35 @@ type InsightResponse = {
   recommendedSkills: string[]
 }
 export const generateAIInsights = async (params: GenerateInsightProps): Promise<InsightResponse> => {
+  const location = params.country ?? "global";
   const prompt = `
-          Analyze the current state of the ${params.industry} industry based on experience ${params.experience}, skills ${params.skills.join(", ")}, country ${params.country}, and provide insights in ONLY the following JSON format without any additional notes or explanations:
+          You are a career intelligence analyst. Analyze the ${params.industry} industry job market specifically for ${location}.
+
+          Candidate profile:
+          - Country/Region: ${location}
+          - Experience: ${params.experience} years
+          - Skills: ${params.skills.join(", ")}
+
+          Return insights tailored to the ${location} market (local salary ranges in the correct local currency, trends relevant to ${location}, in-demand skills specific to ${location}).
+
+          Respond in ONLY the following JSON format with no additional text or markdown:
           {
-            salaryRanges: [
-              { role: string, min: number, max: number, median: number, currency: string, location: string }
+            "salaryRanges": [
+              { "role": "string", "min": number, "max": number, "median": number, "currency": "string", "location": "string" }
             ],
-            jobGrowth: number,
-            demandLevel: "high" | "medium" | "low",
-            keySkills: string[],
-            marketOutlook: "positive" | "stable" | "negative",
-            keyTrends: string[],
-            recommendedSkills: string[]
+            "jobGrowth": number,
+            "demandLevel": "high" | "medium" | "low",
+            "keySkills": ["string"],
+            "marketOutlook": "positive" | "stable" | "negative",
+            "keyTrends": ["string"],
+            "recommendedSkills": ["string"]
           }
-          
-          IMPORTANT: Return ONLY the JSON. No additional text, notes, or markdown formatting.
-          Include at least 5 common roles for salary ranges.
-          Growth rate should be a percentage.
-          Include at least 5 skills and trends.
+
+          Requirements:
+          - salaryRanges: at least 5 common roles, salaries in local currency for ${location}
+          - jobGrowth: percentage as a number (e.g. 8.2)
+          - keyTrends: at least 5 trends relevant to ${location}
+          - keySkills and recommendedSkills: at least 5 each
         `;
   try {
     const result = await new AIClient().generate(prompt);
@@ -162,25 +171,57 @@ export interface GenerateQuizParams {
   experience: number,
   industry: string,
   skills: string[],
+  category: "technical" | "behavioral",
+  difficulty: "junior" | "mid" | "senior" | "lead" | "staff",
+  count: number,
 }
+
+const difficultyLabel: Record<GenerateQuizParams["difficulty"], string> = {
+  junior: "Junior (0–2 years)",
+  mid: "Mid-level (2–5 years)",
+  senior: "Senior (5–8 years)",
+  lead: "Lead / Principal (8+ years)",
+  staff: "Staff / Architect / FAANG-level",
+}
+
 export const generateQuiz = async (params: GenerateQuizParams) => {
+  const level = difficultyLabel[params.difficulty]
+  const isTechnical = params.category === "technical"
   const prompt = `
-    Generate 10 technical interview questions for a ${params.industry
-    } professional having experience of ${params.experience} years${params.skills?.length ? ` with expertise in ${params.skills.join(", ")}` : ""
-    }.
-    
-    Each question should be multiple choice with 4 options.
-    
-    Return the response in this JSON format only, no additional text:
+    Generate ${params.count} ${params.category} interview questions for a ${params.industry} professional.
+
+    Candidate profile:
+    - Experience: ${params.experience} years
+    - Skills: ${params.skills?.join(", ") || "general"}
+    - Target level: ${level}
+
+    ${isTechnical
+      ? `Focus on technical depth appropriate for ${level}. Include questions on system design, coding patterns, or architecture for senior/lead/staff levels. For junior/mid, focus on fundamentals and problem-solving.
+
+      For questions that involve reading or analyzing code, include the code snippet in a "code" field (as a string with newlines escaped). For concept/theory questions, omit the "code" field.
+      All technical questions MUST have 4 "options" and a "correctAnswer" (exact match to one of the options).`
+      : `Focus on behavioral questions using STAR format scenarios relevant to ${level}. Include leadership, conflict resolution, and impact-driven questions scaled to the target level.
+
+      Behavioral questions should NOT have options or a correctAnswer — they are open-ended. Omit the "options" and "correctAnswer" fields entirely for behavioral questions. The "explanation" field should describe what a strong answer looks like.`
+    }
+
+    Return ONLY this JSON format, no additional text:
     {
       "questions": [
         {
           "question": "string",
+          "code": "optional string — only for technical questions with code snippets",
           "options": ["string", "string", "string", "string"],
           "correctAnswer": "string",
           "explanation": "string"
         }
       ]
+    }
+
+    For behavioral questions, the format is:
+    {
+      "question": "string",
+      "explanation": "string describing what a strong STAR answer looks like"
     }
   `;
 
@@ -202,34 +243,42 @@ export const generateQuiz = async (params: GenerateQuizParams) => {
 
 export interface GenerateImprovementTipProps {
   industry: string,
-  wrongQuestions: string,
-  category: "technical" | "behavioral"
+  category: "technical" | "behavioral",
+  difficulty: "junior" | "mid" | "senior" | "lead" | "staff",
+  score: number,
+  wrongQuestions?: string,
 }
 export const generateImprovementTips = async (params: GenerateImprovementTipProps) => {
-  const improvementPrompt = `
-      The user got the following ${params.industry} ${params.category} interview questions wrong:
+  const isPerfect = params.score >= 90;
+  const improvementPrompt = isPerfect
+    ? `
+      The user just scored ${params.score.toFixed(0)}% on a ${params.difficulty}-level ${params.category} interview quiz in the ${params.industry} industry.
 
-      ${params.wrongQuestions}
+      Write a short (2 sentences max), enthusiastic, and specific congratulatory message.
+      Acknowledge their achievement and suggest one advanced next step to keep growing.
+      Be warm, energetic, and motivating — like a proud mentor.
+    `
+    : `
+      The user scored ${params.score.toFixed(0)}% on a ${params.difficulty}-level ${params.category} interview quiz in the ${params.industry} industry.
 
-      Based on these mistakes, provide a concise, specific improvement tip.
-      Focus on the knowledge gaps revealed by these wrong answers.
-      Keep the response under 2 sentences and make it encouraging.
-      Don't explicitly mention the mistakes, instead focus on what to learn/practice.
+      ${params.wrongQuestions ? `They got these questions wrong:\n${params.wrongQuestions}` : ""}
+
+      Write a short (2 sentences max) feedback message.
+      Be encouraging but specific — acknowledge what they got right and give one actionable improvement tip.
+      Focus on the knowledge gaps without listing the mistakes. Be warm and motivating.
     `;
 
   try {
     const result = await new AIClient().generate(improvementPrompt);
     const response = result.text;
     if (!response) {
-      throw new Error("Something went wrong while generating quiz")
+      throw new Error("Something went wrong while generating improvement tips")
     }
-    const cleanedText = response.replace(/```(?:json)?\n?/g, "").trim();
-    const quiz = JSON.parse(cleanedText);
-    return quiz.questions;
+    return response.trim();
   } catch (error) {
     console.error("Error", error)
 
-    throw new Error("Something went wrong while generating quiz")
+    throw new Error("Something went wrong while generating improvement tips")
   }
 
 }

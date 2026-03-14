@@ -90,7 +90,7 @@ export const userProfiles = pgTable("user_profiles", {
     experience: integer("experience").notNull(),
     bio: text("bio").notNull(),
     skills: text("skills").array().notNull(),
-    country: text("country").notNull(),
+    country: text("country"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
@@ -103,7 +103,7 @@ export const userProfiles = pgTable("user_profiles", {
 export const industryInsights = pgTable("industry_insights", {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
-    industry: text("industry").notNull().unique(),
+    industry: text("industry").notNull(),
     salaryRanges: json("salary_range").$type<{ role: string, location: string, min: number; max: number; currency: string, median: number }>().array().notNull(),
     jobGrowth: doublePrecision("job_growth").notNull(),
     demandLevel: demandLevelEnum("demand_level").notNull(),

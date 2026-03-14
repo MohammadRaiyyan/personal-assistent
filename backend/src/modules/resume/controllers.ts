@@ -14,7 +14,7 @@ export async function getResume(req: AuthenticatedRequest, res: Response) {
 
         res.status(200).json({
             message: "",
-            data: resume
+            data: resume ?? null
         })
     } catch (error) {
         res.status(500).json({
@@ -45,10 +45,11 @@ export async function createResume(req: AuthenticatedRequest, res: Response) {
     try {
         const { id: userId } = req.user!;
         const { content } = req.body;
-        const createdResume = await db.insert(resumes).values({
+        const [createdResume] = await db.insert(resumes).values({
             content,
             userId
-        });
+        }).returning();
+
         res.status(200).json({
             message: "Resume saved successfully",
             data: createdResume
@@ -59,13 +60,15 @@ export async function createResume(req: AuthenticatedRequest, res: Response) {
         })
     }
 }
+
 export async function updateResume(req: AuthenticatedRequest, res: Response) {
     try {
         const { id: userId } = req.user!;
+        const resumeId = req.params.resumeId;
         const { content } = req.body;
-        const updatedResume = await db.update(resumes).set({
+        const [updatedResume] = await db.update(resumes).set({
             content
-        }).where(eq(resumes.userId, userId));
+        }).where(and(eq(resumes.userId, userId), eq(resumes.id, resumeId))).returning();
 
         res.status(200).json({
             message: "Resume updated successfully",
@@ -77,6 +80,7 @@ export async function updateResume(req: AuthenticatedRequest, res: Response) {
         })
     }
 }
+
 export async function deleteResume(req: AuthenticatedRequest, res: Response) {
     try {
         const { id: userId } = req.user!;

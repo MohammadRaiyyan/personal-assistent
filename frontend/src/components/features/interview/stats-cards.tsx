@@ -1,11 +1,12 @@
 import { Brain, Target, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Assessment } from "../../../../../shared/types/api";
 
-export default function StatsCards({ assessments }) {
+export default function StatsCards({ assessments }: { assessments: Assessment[] }) {
   const getAverageScore = () => {
     if (!assessments?.length) return 0;
     const total = assessments.reduce(
-      (sum, assessment) => sum + assessment.quizScore,
+      (sum, assessment) => sum + assessment.score,
       0
     );
     return (total / assessments.length).toFixed(1);
@@ -59,7 +60,7 @@ export default function StatsCards({ assessments }) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {getLatestAssessment()?.quizScore.toFixed(1) || 0}%
+            {getLatestAssessment()?.score.toFixed(1) ?? 0}%
           </div>
           <p className="text-xs text-muted-foreground">Most recent quiz</p>
         </CardContent>

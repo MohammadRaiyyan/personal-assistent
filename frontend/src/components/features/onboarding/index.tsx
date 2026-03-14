@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/card'
 import { industries } from '@/constants/onboarding'
 import { useAppForm } from '@/hooks/demo.form'
+import { api } from '@/lib/api'
 import { onboardingSchema } from '@/schema/onboarding'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
@@ -16,9 +17,10 @@ import type z from 'zod'
 const Onboarding = () => {
   const router = useRouter()
 
+
   const { mutateAsync: onboard } = useMutation({
     mutationFn: async (data: z.infer<typeof onboardingSchema>) => {
-      // API call to update user profile
+      return api.post('/api/user/profile', data)
     },
   })
 
@@ -29,6 +31,7 @@ const Onboarding = () => {
       experience: '',
       skills: '',
       bio: '',
+      country: '',
     },
     validationLogic: revalidateLogic({
       mode: 'change',
@@ -46,7 +49,8 @@ const Onboarding = () => {
         industry: formattedIndustry,
       })
       await onboard(payload)
-        .then(() => {
+        .then(async () => {
+          await router.invalidate()
           router.navigate({ to: '/app' })
         })
         .catch((error) => {
@@ -149,6 +153,16 @@ const Onboarding = () => {
                 label="Skills"
                 type="text"
                 placeholder="e.g., Python, JavaScript, Project Management"
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="country">
+            {({ TextField }) => (
+              <TextField
+                label="Country"
+                type="text"
+                placeholder="e.g., India, United States, Germany"
               />
             )}
           </form.AppField>

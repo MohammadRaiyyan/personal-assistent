@@ -12,14 +12,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import type { Assessment, QuizResultData } from '../../../../../shared/types/api'
 import { useRouter } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { useState } from 'react'
 import QuizResult from './quiz-result'
 
-export default function QuizList({ assessments }) {
+export default function QuizList({ assessments }: { assessments: Assessment[] }) {
   const router = useRouter()
-  const [selectedQuiz, setSelectedQuiz] = useState(null)
+  const [selectedQuiz, setSelectedQuiz] = useState<QuizResultData | null>(null)
+
+  const toResultData = (assessment: Assessment): QuizResultData => ({
+    score: assessment.score,
+    questions: assessment.questions,
+    improvementTip: assessment.improvementTips?.[0] ?? null,
+  })
 
   return (
     <>
@@ -47,14 +54,14 @@ export default function QuizList({ assessments }) {
               <Card
                 key={assessment.id}
                 className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSelectedQuiz(assessment)}
+                onClick={() => setSelectedQuiz(toResultData(assessment))}
               >
                 <CardHeader>
                   <CardTitle className="gradient-title text-2xl">
                     Quiz {i + 1}
                   </CardTitle>
                   <CardDescription className="flex justify-between w-full">
-                    <div>Score: {assessment.quizScore.toFixed(1)}%</div>
+                    <div>Score: {assessment.score.toFixed(1)}%</div>
                     <div>
                       {format(
                         new Date(assessment.createdAt),
@@ -63,10 +70,10 @@ export default function QuizList({ assessments }) {
                     </div>
                   </CardDescription>
                 </CardHeader>
-                {assessment.improvementTip && (
+                {assessment.improvementTips?.[0] && (
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      {assessment.improvementTip}
+                      {assessment.improvementTips[0]}
                     </p>
                   </CardContent>
                 )}

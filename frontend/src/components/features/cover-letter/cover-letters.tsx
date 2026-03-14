@@ -17,21 +17,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { deleteCoverLetter } from '@/lib/coverLetterApi'
+import type { CoverLetter } from '../../../../../shared/types/api'
+import { useMutation } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { Eye, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function CoverLetters({ coverLetters }) {
+export default function CoverLetters({ coverLetters }: { coverLetters: CoverLetter[] }) {
   const router = useRouter()
 
-  const handleDelete = async (id) => {
+  const mutation = useMutation({
+    mutationFn: (id: string) => deleteCoverLetter(id),
+  })
+
+  const handleDelete = async (id: string) => {
     try {
-      //   await deleteCoverLetter(id)
+      await mutation.mutateAsync(id)
       toast.success('Cover letter deleted successfully!')
-      //   router.refresh()
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete cover letter')
+      router.invalidate()
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete cover letter',
+      )
     }
   }
 
@@ -57,7 +66,7 @@ export default function CoverLetters({ coverLetters }) {
               <div>
                 <Link to="/app/cover-letters/$id" params={{ id: letter.id }}>
                   <CardTitle className="text-xl gradient-title">
-                    {letter.jobTitle} at {letter.companyName}
+                    {letter.positionTitle} at {letter.companyName}
                   </CardTitle>
                 </Link>
                 <CardDescription>
@@ -88,7 +97,7 @@ export default function CoverLetters({ coverLetters }) {
                       <AlertDialogTitle>Delete Cover Letter?</AlertDialogTitle>
                       <AlertDialogDescription>
                         This action cannot be undone. This will permanently
-                        delete your cover letter for {letter.jobTitle} at{' '}
+                        delete your cover letter for {letter.positionTitle} at{' '}
                         {letter.companyName}.
                       </AlertDialogDescription>
                     </AlertDialogHeader>

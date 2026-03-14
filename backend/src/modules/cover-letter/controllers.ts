@@ -14,7 +14,7 @@ export async function getCoverLetter(req: AuthenticatedRequest, res: Response) {
         })
         res.status(200).json({
             message: "",
-            data: coverLetter
+            data: coverLetter ?? null
         })
     } catch (error) {
         res.status(500).json({
@@ -44,15 +44,15 @@ export async function deleteCoverLetter(req: AuthenticatedRequest, res: Response
     try {
         const { id: userId } = req.user!;
         const coverLetterId = req.params.coverLetterId;
-        await db.delete(coverLetters).where(and(eq(coverLetters.userId, userId), eq(coverLetters.id, coverLetterId))
+        await db.delete(coverLetters).where(
+            and(eq(coverLetters.userId, userId), eq(coverLetters.id, coverLetterId))
         );
         res.status(200).json({
-            message: "Letter cover deleted successfully",
-
+            message: "Cover letter deleted successfully",
         })
     } catch (error) {
         res.status(500).json({
-            message: "Something went wrong while deleting letter cover"
+            message: "Something went wrong while deleting cover letter"
         })
     }
 }
@@ -74,14 +74,14 @@ export async function getGenerateCoverLetter(req: AuthenticatedRequest, res: Res
             bio, companyName, experience, industry, jobDescription, jobTitle: positionTitle, skills
         });
 
-        const coverLetter = await db.insert(coverLetters).values({
+        const [coverLetter] = await db.insert(coverLetters).values({
             content: result,
             jobDescription,
             companyName,
             positionTitle,
             status: "finalized",
             userId
-        });
+        }).returning();
 
         res.status(201).json({
             message: "Cover letter generated successfully",

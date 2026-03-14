@@ -6,11 +6,28 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAppForm } from '@/hooks/demo.form'
+import { createCoverLetter } from '@/lib/coverLetterApi'
+import type { CoverLetter } from '../../../../../shared/types/api'
+import { useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 export default function Generate() {
   const router = useRouter()
+
+  const mutation = useMutation({
+    mutationFn: (payload: { companyName: string; positionTitle: string; jobDescription: string }) =>
+      createCoverLetter(payload),
+    onError: (err: Error) => {
+      toast.error(err?.message || 'Failed to generate cover letter')
+    },
+    onSuccess: (res: CoverLetter) => {
+      toast.success('Cover letter generated')
+      if (res.id) {
+        router.navigate({ to: '/app/cover-letters/$id', params: { id: res.id } })
+      }
+    },
+  })
 
   const form = useAppForm({
     defaultValues: {
@@ -18,35 +35,27 @@ export default function Generate() {
       jobTitle: '',
       jobDescription: '',
     },
-    onSubmit: () => {},
+    onSubmit: async ({ value }: { value: { companyName: string; jobTitle: string; jobDescription: string } }) => {
+      await mutation.mutateAsync({
+        companyName: value.companyName,
+        positionTitle: value.jobTitle,
+        jobDescription: value.jobDescription,
+      })
+    },
   })
 
-  const onSubmit = async (data) => {
-    try {
-      //   await generateLetterFn(data)
-    } catch (error) {
-      toast.error(error.message || 'Failed to generate cover letter')
-    }
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-4">
+      <Card className="max-w-3xl w-full">
         <CardHeader>
-          <CardTitle>Job Details</CardTitle>
+          <CardTitle className="text-2xl">Generate Cover Letter</CardTitle>
           <CardDescription>
-            Provide information about the position you're applying for
+            Provide the job details and we'll generate a tailored cover letter
+            for you.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              form.handleSubmit()
-            }}
-            className="space-y-4"
-          >
-            {/* Form fields remain the same */}
+          <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <form.AppField name="companyName">
                 {({ TextField }) => (
@@ -68,19 +77,22 @@ export default function Generate() {
                 )}
               </form.AppField>
             </div>
+
             <form.AppField name="jobDescription">
               {({ TextArea }) => (
                 <TextArea
                   label="Job Description"
                   placeholder="Enter job description"
-                  rows={20}
+                  rows={12}
                 />
               )}
             </form.AppField>
 
             <div className="w-max">
               <form.AppForm>
-                <form.SubscribeButton label="Generate" />
+                <form.SubscribeButton
+                  label={mutation.isPending ? 'Generating...' : 'Generate'}
+                />
               </form.AppForm>
             </div>
           </form>

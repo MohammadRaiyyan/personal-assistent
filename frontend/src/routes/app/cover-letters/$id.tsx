@@ -1,29 +1,25 @@
 import Preview from '@/components/features/cover-letter/preview'
+import { RouteError } from '@/components/features/common/route-error'
+import { RoutePending } from '@/components/features/common/route-pending'
 import { Button } from '@/components/ui/button'
+import { getCoverLetter } from '@/lib/coverLetterApi'
+import type { CoverLetter } from '../../../../../shared/types/api'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/app/cover-letters/$id')({
+  staleTime: 30_000,
+  loader: async ({ params }): Promise<CoverLetter> => {
+    return await getCoverLetter(params.id)
+  },
+  pendingComponent: RoutePending,
+  errorComponent: ({ error }) => <RouteError error={error} />,
   component: RouteComponent,
 })
-const coverLetter = {
-  id: '1',
-  jobTitle: 'Frontend Developer',
-  companyName: 'Tech Corp',
-  content: `
-# Cover Letter
 
-Dear Hiring Manager,
-
-I am excited to apply for the Frontend Developer position at Tech Corp. My experience with React and TypeScript makes me a great fit for your team.
-
-I look forward to contributing to your projects!
-
-Best regards,  
-Jane Doe
-`,
-}
 function RouteComponent() {
+  const coverLetter = Route.useLoaderData()
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col space-y-2">
@@ -35,7 +31,7 @@ function RouteComponent() {
         </Link>
 
         <h1 className="text-4xl font-bold gradient-title mb-6">
-          {coverLetter?.jobTitle} at {coverLetter?.companyName}
+          {coverLetter?.positionTitle} at {coverLetter?.companyName}
         </h1>
       </div>
 

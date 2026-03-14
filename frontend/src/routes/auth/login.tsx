@@ -7,21 +7,39 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { useAuthContext } from '@/context/auth-context'
 import { useAppForm } from '@/hooks/demo.form'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { loginSchema } from '@/schema/auth'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth/login')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { handleSubmit, AppField, SubscribeButton, AppForm } = useAppForm({
+  const { login, loginWithProvider } = useAuthContext()
+  const router = useRouter()
+
+  const form = useAppForm({
     defaultValues: {
       email: '',
       password: '',
     },
-    onSubmit: () => {},
+    validators: {
+      onSubmit: loginSchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        await login(value)
+        await router.invalidate()
+        router.navigate({ to: '/app' })
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Login failed')
+      }
+    },
   })
+
   return (
     <Card className="max-w-sm w-full">
       <CardHeader>
@@ -29,20 +47,34 @@ function RouteComponent() {
         <CardDescription>Login to access your career dashboard</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <AppField name="email">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            form.handleSubmit()
+          }}
+          className="space-y-3"
+        >
+          <form.AppField name="email">
             {({ TextField }) => {
-              return <TextField label="Email" placeholder="Enter email" />
+              return (
+                <TextField label="Email" type="email" placeholder="Enter email" />
+              )
             }}
-          </AppField>
-          <AppField name="password">
+          </form.AppField>
+          <form.AppField name="password">
             {({ TextField }) => {
-              return <TextField label="Password" placeholder="Enter password" />
+              return (
+                <TextField
+                  label="Password"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              )
             }}
-          </AppField>
-          <AppForm>
-            <SubscribeButton label="Login" />
-          </AppForm>
+          </form.AppField>
+          <form.AppForm>
+            <form.SubscribeButton label="Login" />
+          </form.AppForm>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col gap-3 items-start text-muted-foreground">
@@ -52,18 +84,28 @@ function RouteComponent() {
           <span className="h-[0.1px] flex w-full bg-border"></span>
         </div>
         <div className="flex items-center gap-4 w-full">
-          <Button className="flex-1 w-full" variant={'outline'}>
+          <Button
+            className="flex-1 w-full"
+            variant={'outline'}
+            type="button"
+            onClick={() => loginWithProvider('google')}
+          >
             <img src="/icons/google.svg" alt="Google" />
             Google
           </Button>
-          <Button className="flex-1 w-full" variant={'outline'}>
+          <Button
+            className="flex-1 w-full"
+            variant={'outline'}
+            type="button"
+            onClick={() => loginWithProvider('github')}
+          >
             <img src="/icons/github.svg" alt="GitHub" />
             Github
           </Button>
         </div>
         <p className="text-sm">
-          Already have account{' '}
-          <Link to="/auth/login" className="text-primary">
+          Don&apos;t have an account?{' '}
+          <Link to="/auth/register" className="text-primary">
             Register
           </Link>
         </p>

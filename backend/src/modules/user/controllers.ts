@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { type NextFunction, type Response } from "express";
+import type { APIResponse, UserProfile } from '../../../../shared/types/api';
 import db from "../../db/index.ts";
-import { users } from "../../db/schema.ts";
+import { userProfiles } from "../../db/schema.ts";
 import { type AuthenticatedRequest } from "../../middlewares/authenticate.ts";
 
 // export async function updateUser(req: Request, res: Response) {
@@ -58,18 +59,37 @@ import { type AuthenticatedRequest } from "../../middlewares/authenticate.ts";
 // }
 // }
 
+export async function upsertUserProfile(req: AuthenticatedRequest, res: Response, _nextFn: NextFunction) {
+    const { id: userId } = req.user!;
+    const { industry, experience, bio, skills, country } = req.body;
+
+    try {
+        const [profile] = await db.insert(userProfiles)
+            .values({ userId, industry, experience, bio, skills, country, onboarded: true })
+            .onConflictDoUpdate({
+                target: userProfiles.userId,
+                set: { industry, experience, bio, skills, country, onboarded: true },
+            })
+            .returning();
+
+        res.status(200).json({ message: "Profile updated", data: profile } as APIResponse<UserProfile>);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update user profile" });
+    }
+}
+
 export async function getUserProfile(req: AuthenticatedRequest, res: Response, _nextFn: NextFunction) {
     const { id: userId } = req.user!;
 
     try {
         const userDetails = await db.query.userProfiles.findFirst({
-            where: eq(users.id, userId),
+            where: eq(userProfiles.userId, userId),
         });
 
         res.status(200).json({
             message: "",
-            data: userDetails
-        })
+            data: userDetails ?? null
+        } as APIResponse<UserProfile | null>)
     } catch (error) {
         res.status(500).json({
             message: "Failed to fetch user profile"

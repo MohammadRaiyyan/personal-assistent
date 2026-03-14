@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import type { Assessment } from '../../../../../shared/types/api'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 import {
@@ -17,14 +18,16 @@ import {
   YAxis,
 } from 'recharts'
 
-export default function PerformanceChart({ assessments }) {
-  const [chartData, setChartData] = useState([])
+type ChartPoint = { date: string; score: number }
+
+export default function PerformanceChart({ assessments }: { assessments: Assessment[] }) {
+  const [chartData, setChartData] = useState<ChartPoint[]>([])
 
   useEffect(() => {
     if (assessments) {
       const formattedData = assessments.map((assessment) => ({
         date: format(new Date(assessment.createdAt), 'MMM dd'),
-        score: assessment.quizScore,
+        score: assessment.score,
       }))
       setChartData(formattedData)
     }
@@ -39,7 +42,7 @@ export default function PerformanceChart({ assessments }) {
         <CardDescription>Your quiz scores over time</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
+        <div className="h-75">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />

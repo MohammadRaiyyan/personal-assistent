@@ -7,22 +7,40 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { useAuthContext } from '@/context/auth-context'
 import { useAppForm } from '@/hooks/demo.form'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { signUpSchema } from '@/schema/auth'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth/register')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { handleSubmit, AppField, SubscribeButton, AppForm } = useAppForm({
+  const { signup, loginWithProvider } = useAuthContext()
+  const router = useRouter()
+
+  const form = useAppForm({
     defaultValues: {
       name: '',
       email: '',
       password: '',
     },
-    onSubmit: () => {},
+    validators: {
+      onSubmit: signUpSchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        await signup(value)
+        await router.invalidate()
+        router.navigate({ to: '/app/onboarding' })
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Registration failed')
+      }
+    },
   })
+
   return (
     <Card className="max-w-sm w-full">
       <CardHeader>
@@ -32,27 +50,45 @@ function RouteComponent() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <AppField name="name">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            form.handleSubmit()
+          }}
+          className="space-y-3"
+        >
+          <form.AppField name="name">
             {({ TextField }) => {
               return (
-                <TextField label="Full Name" placeholder="Enter full name" />
+                <TextField
+                  label="Full Name"
+                  type="text"
+                  placeholder="Enter full name"
+                />
               )
             }}
-          </AppField>
-          <AppField name="email">
+          </form.AppField>
+          <form.AppField name="email">
             {({ TextField }) => {
-              return <TextField label="Email" placeholder="Enter email" />
+              return (
+                <TextField label="Email" type="email" placeholder="Enter email" />
+              )
             }}
-          </AppField>
-          <AppField name="password">
+          </form.AppField>
+          <form.AppField name="password">
             {({ TextField }) => {
-              return <TextField label="Password" placeholder="Enter password" />
+              return (
+                <TextField
+                  label="Password"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              )
             }}
-          </AppField>
-          <AppForm>
-            <SubscribeButton label="Register" />
-          </AppForm>
+          </form.AppField>
+          <form.AppForm>
+            <form.SubscribeButton label="Register" />
+          </form.AppForm>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col gap-3 items-start text-muted-foreground">
@@ -62,17 +98,27 @@ function RouteComponent() {
           <span className="h-[0.1px] flex w-full bg-border"></span>
         </div>
         <div className="flex items-center gap-4 w-full">
-          <Button className="flex-1 w-full" variant={'outline'}>
+          <Button
+            className="flex-1 w-full"
+            variant={'outline'}
+            type="button"
+            onClick={() => loginWithProvider('google')}
+          >
             <img src="/icons/google.svg" alt="Google" />
             Google
           </Button>
-          <Button className="flex-1 w-full" variant={'outline'}>
+          <Button
+            className="flex-1 w-full"
+            variant={'outline'}
+            type="button"
+            onClick={() => loginWithProvider('github')}
+          >
             <img src="/icons/github.svg" alt="GitHub" />
             Github
           </Button>
         </div>
         <p className="text-sm">
-          Already have account{' '}
+          Already have an account?{' '}
           <Link to="/auth/login" className="text-primary">
             Login
           </Link>

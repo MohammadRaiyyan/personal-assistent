@@ -1,29 +1,23 @@
 import CoverLetters from '@/components/features/cover-letter/cover-letters'
+import { RouteError } from '@/components/features/common/route-error'
+import { RoutePending } from '@/components/features/common/route-pending'
 import { Button } from '@/components/ui/button'
+import { getCoverLetters } from '@/lib/coverLetterApi'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
 export const Route = createFileRoute('/app/cover-letters/')({
+  loader: async () => {
+    return await getCoverLetters()
+  },
+  pendingComponent: RoutePending,
+  errorComponent: ({ error }) => <RouteError error={error} />,
   component: RouteComponent,
 })
-const coverLetters = [
-  {
-    id: '1',
-    jobTitle: 'Frontend Developer',
-    companyName: 'Tech Corp',
-    createdAt: '2025-12-01T10:00:00Z',
-    jobDescription:
-      'Develop and maintain user interfaces using React and TypeScript.',
-  },
-  {
-    id: '2',
-    jobTitle: 'Backend Engineer',
-    companyName: 'Data Solutions',
-    createdAt: '2025-11-15T14:30:00Z',
-    jobDescription: 'Design and implement APIs and microservices with Node.js.',
-  },
-]
+
 function RouteComponent() {
+  const coverLetters = Route.useLoaderData()
+
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-2 items-center justify-between mb-5">

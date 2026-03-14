@@ -1,6 +1,10 @@
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAppForm } from '@/hooks/demo.form'
+import { createResume, improveResume, updateResume } from '@/lib/resumeApi'
+import type { ImproveResumePayload } from '../../../../../shared/types/api'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from '@tanstack/react-router'
 import MDEditor from '@uiw/react-md-editor'
 import html2pdf from 'html2pdf.js/dist/html2pdf.min.js'
 import {
@@ -21,7 +25,6 @@ import { useAuthContext } from '@/context/auth-context'
 import { resumeSchema } from '@/schema/onboarding'
 import { entriesToMarkdown } from '@/utils/entriesToMarkdown'
 import { useStore } from '@tanstack/react-form'
-import { useMutation } from '@tanstack/react-query'
 import type z from 'zod'
 
 const defaultContent: z.infer<typeof resumeSchema> = {
@@ -67,33 +70,15 @@ const defaultContent: z.infer<typeof resumeSchema> = {
 
 export default function ResumeBuilder({
   initialContent,
+  resumeId,
 }: {
   initialContent: string
+  resumeId?: string
 }) {
   const [activeTab, setActiveTab] = useState('edit')
   const [previewContent, setPreviewContent] = useState(() => initialContent)
-  const [resumeMode, setResumeMode] = useState('preview')
-  const { session } = useAuthContext()
-
-  const form = useAppForm({
-    defaultValues: defaultContent,
-    onSubmit: async () => {
-      try {
-        const formattedContent = previewContent
-          .replace(/\n/g, '\n') // Normalize newlines
-          .replace(/\n\s*\n/g, '\n\n') // Normalize multiple newlines to double newlines
-          .trim()
-
-        console.log(previewContent, formattedContent)
-        await saveResumeFn(previewContent)
-      } catch (error) {
-        console.error('Save error:', error)
-      }
-    },
-    validators: {
-      onSubmit: resumeSchema,
-    },
-  })
+  const [resumeMode, setResumeMode] = useState<'preview' | 'edit'>('preview')
+  const { session, profile } = useAuthContext()
 
   const {
     mutateAsync: saveResumeFn,
@@ -102,12 +87,30 @@ export default function ResumeBuilder({
     error: saveError,
   } = useMutation({
     mutationFn: async (content: string) => {
-      new Promise((resolve) =>
-        setTimeout(() => resolve({ success: true }), 1000),
-      )
+      if (resumeId) {
+        return await updateResume(resumeId, { content })
+      }
+      return await createResume({ content })
     },
     onSuccess: () => {
-      // Optional: additional success handling
+      router.invalidate()
+    },
+  })
+
+  const form = useAppForm({
+    defaultValues: defaultContent,
+    onSubmit: async () => {
+      try {
+        const formattedContent = previewContent
+          .replace(/\n\s*\n/g, '\n\n')
+          .trim()
+        await saveResumeFn(formattedContent)
+      } catch (error) {
+        console.error('Save error:', error)
+      }
+    },
+    validators: {
+      onSubmit: resumeSchema,
     },
   })
 
@@ -166,6 +169,12 @@ export default function ResumeBuilder({
   }
 
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isImproving, setIsImproving] = useState(false)
+  const router = useRouter()
+
+  const improveMutation = useMutation({
+    mutationFn: (payload: ImproveResumePayload) => improveResume(payload),
+  })
 
   const generatePDF = async () => {
     setIsGenerating(true)
@@ -212,6 +221,36 @@ export default function ResumeBuilder({
                   Download PDF
                 </>
               )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  setIsImproving(true)
+                  const contentToImprove =
+                    formValues.summary || previewContent || ''
+                  const res = await improveMutation.mutateAsync({
+                    type: 'summary',
+                    content: contentToImprove,
+                    industry: profile?.industry ?? '',
+                  })
+                  if (res) {
+                    setPreviewContent(res)
+                    toast.success('Summary improved')
+                  }
+                } catch (err: unknown) {
+                  toast.error(
+                    err instanceof Error
+                      ? err.message
+                      : 'Failed to improve summary',
+                  )
+                } finally {
+                  setIsImproving(false)
+                }
+              }}
+              disabled={isImproving}
+            >
+              {isImproving ? 'Improving...' : 'Improve Summary'}
             </Button>
             <Button
               variant="default"
@@ -316,6 +355,7 @@ export default function ResumeBuilder({
               )}
             </form.AppField>
 
+            {/* Work Experience */}
             <form.AppField name="experience" mode="array">
               {(field) => {
                 return (
@@ -444,6 +484,8 @@ export default function ResumeBuilder({
                 )
               }}
             </form.AppField>
+
+            {/* Education */}
             <form.AppField name="education" mode="array">
               {(field) => {
                 return (
@@ -483,7 +525,7 @@ export default function ResumeBuilder({
                               </form.AppField>
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].organization`}
+                                name={`education[${index}].organization`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -495,7 +537,7 @@ export default function ResumeBuilder({
                               </form.AppField>
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].startDate`}
+                                name={`education[${index}].startDate`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -507,7 +549,7 @@ export default function ResumeBuilder({
                               </form.AppField>
                               <form.Subscribe
                                 selector={(state) =>
-                                  state.values.experience[index].current
+                                  state.values.education[index].current
                                 }
                               >
                                 {(isCurrent) => {
@@ -517,7 +559,7 @@ export default function ResumeBuilder({
                                   return (
                                     <form.AppField
                                       key={index}
-                                      name={`experience[${index}].endDate`}
+                                      name={`education[${index}].endDate`}
                                     >
                                       {({ TextField }) => (
                                         <TextField
@@ -533,7 +575,7 @@ export default function ResumeBuilder({
 
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].current`}
+                                name={`education[${index}].current`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -545,7 +587,7 @@ export default function ResumeBuilder({
                             </div>
                             <form.AppField
                               key={index}
-                              name={`experience[${index}].description`}
+                              name={`education[${index}].description`}
                             >
                               {({ TextArea }) => (
                                 <TextArea
@@ -572,6 +614,8 @@ export default function ResumeBuilder({
                 )
               }}
             </form.AppField>
+
+            {/* Projects */}
             <form.AppField name="projects" mode="array">
               {(field) => {
                 return (
@@ -600,19 +644,19 @@ export default function ResumeBuilder({
                             <div className="grid grid-cols-4 gap-3">
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].title`}
+                                name={`projects[${index}].title`}
                               >
                                 {({ TextField }) => (
                                   <TextField
                                     placeholder="Enter project title"
                                     type="text"
-                                    label=" Project Title"
+                                    label="Project Title"
                                   />
                                 )}
                               </form.AppField>
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].organization`}
+                                name={`projects[${index}].organization`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -624,7 +668,7 @@ export default function ResumeBuilder({
                               </form.AppField>
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].startDate`}
+                                name={`projects[${index}].startDate`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -636,7 +680,7 @@ export default function ResumeBuilder({
                               </form.AppField>
                               <form.Subscribe
                                 selector={(state) =>
-                                  state.values.experience[index].current
+                                  state.values.projects[index].current
                                 }
                               >
                                 {(isCurrent) => {
@@ -646,7 +690,7 @@ export default function ResumeBuilder({
                                   return (
                                     <form.AppField
                                       key={index}
-                                      name={`experience[${index}].endDate`}
+                                      name={`projects[${index}].endDate`}
                                     >
                                       {({ TextField }) => (
                                         <TextField
@@ -662,7 +706,7 @@ export default function ResumeBuilder({
 
                               <form.AppField
                                 key={index}
-                                name={`experience[${index}].current`}
+                                name={`projects[${index}].current`}
                               >
                                 {({ TextField }) => (
                                   <TextField
@@ -674,7 +718,7 @@ export default function ResumeBuilder({
                             </div>
                             <form.AppField
                               key={index}
-                              name={`experience[${index}].description`}
+                              name={`projects[${index}].description`}
                             >
                               {({ TextArea }) => (
                                 <TextArea
@@ -731,14 +775,14 @@ export default function ResumeBuilder({
             <div className="flex p-3 gap-2 items-center border-2 border-yellow-600 text-yellow-600 rounded mb-2">
               <AlertTriangle className="h-5 w-5" />
               <span className="text-sm">
-                You will lose editied markdown if you update the form data.
+                You will lose edited markdown if you update the form data.
               </span>
             </div>
           )}
           <div className="border rounded-lg">
             <MDEditor
               value={previewContent}
-              onChange={setPreviewContent}
+              onChange={(v) => setPreviewContent(v ?? '')}
               height={800}
               preview={resumeMode}
             />

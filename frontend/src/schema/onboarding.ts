@@ -21,6 +21,7 @@ export const onboardingSchema = z.object({
                 .filter(Boolean)
             : undefined
     ),
+    country: z.string().min(1, "Please enter your country"),
 });
 
 export const contactSchema = z.object({
@@ -37,7 +38,7 @@ export const entrySchema = z
         startDate: z.string().min(1, "Start date is required"),
         endDate: z.string().optional(),
         description: z.string().min(1, "Description is required"),
-        current: z.boolean().default(false),
+        current: z.boolean(),
     })
     .refine(
         (data) => {

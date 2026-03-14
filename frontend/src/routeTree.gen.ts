@@ -101,8 +101,8 @@ export interface FileRoutesByFullPath {
   '/app/cover-letters/$id': typeof AppCoverLettersIdRoute
   '/app/cover-letters/new': typeof AppCoverLettersNewRoute
   '/app/interview/mock': typeof AppInterviewMockRoute
-  '/app/cover-letters': typeof AppCoverLettersIndexRoute
-  '/app/interview': typeof AppInterviewIndexRoute
+  '/app/cover-letters/': typeof AppCoverLettersIndexRoute
+  '/app/interview/': typeof AppInterviewIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,8 +148,8 @@ export interface FileRouteTypes {
     | '/app/cover-letters/$id'
     | '/app/cover-letters/new'
     | '/app/interview/mock'
-    | '/app/cover-letters'
-    | '/app/interview'
+    | '/app/cover-letters/'
+    | '/app/interview/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -248,14 +248,14 @@ declare module '@tanstack/react-router' {
     '/app/interview/': {
       id: '/app/interview/'
       path: '/interview'
-      fullPath: '/app/interview'
+      fullPath: '/app/interview/'
       preLoaderRoute: typeof AppInterviewIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/cover-letters/': {
       id: '/app/cover-letters/'
       path: '/cover-letters'
-      fullPath: '/app/cover-letters'
+      fullPath: '/app/cover-letters/'
       preLoaderRoute: typeof AppCoverLettersIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }

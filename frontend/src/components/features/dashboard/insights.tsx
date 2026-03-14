@@ -24,6 +24,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+import type { Insight } from '../../../../../shared/types/api'
 
 const salaryChartConfig = {
   min: {
@@ -40,7 +41,7 @@ const salaryChartConfig = {
   },
 } satisfies ChartConfig
 
-const Insights = ({ insights }) => {
+const Insights = ({ insights }: { insights: Insight }) => {
   const salaryData = insights.salaryRanges.map((range) => ({
     name: range.role,
     min: range.min / 1000,
@@ -48,7 +49,7 @@ const Insights = ({ insights }) => {
     median: range.median / 1000,
   }))
 
-  const getDemandLevelColor = (level) => {
+  const getDemandLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
       case 'high':
         return 'bg-green-500'
@@ -61,7 +62,7 @@ const Insights = ({ insights }) => {
     }
   }
 
-  const getMarketOutlookInfo = (outlook) => {
+  const getMarketOutlookInfo = (outlook: string) => {
     switch (outlook.toLowerCase()) {
       case 'positive':
         return { icon: TrendingUp, color: 'text-green-500' }
@@ -77,7 +78,6 @@ const Insights = ({ insights }) => {
   const OutlookIcon = getMarketOutlookInfo(insights.marketOutlook).icon
   const outlookColor = getMarketOutlookInfo(insights.marketOutlook).color
 
-  // Format dates using date-fns
   const lastUpdatedDate = format(new Date(insights.lastUpdated), 'dd/MM/yyyy')
   const nextUpdateDistance = formatDistanceToNow(
     new Date(insights.nextUpdate),
@@ -116,9 +116,9 @@ const Insights = ({ insights }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {insights.growthRate.toFixed(1)}%
+              {insights.jobGrowth.toFixed(1)}%
             </div>
-            <Progress value={insights.growthRate} className="mt-2" />
+            <Progress value={insights.jobGrowth} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -146,7 +146,7 @@ const Insights = ({ insights }) => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2 mt-2">
-              {insights.topSkills.map((skill) => (
+              {insights.keySkills.map((skill) => (
                 <Badge key={skill} variant="default">
                   {skill}
                 </Badge>
