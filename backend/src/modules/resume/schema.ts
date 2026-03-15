@@ -1,7 +1,8 @@
 import z from "zod";
 
 export const createResumeSchema = z.object({
-    content: z.string("Resume content is required")
+    content: z.string("Resume content is required"),
+    title: z.string().optional(),
 })
 
 export const improveResumeContentSchema = z.object({

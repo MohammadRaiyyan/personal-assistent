@@ -1,8 +1,8 @@
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -17,15 +17,22 @@ import { useRouter } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { useState } from 'react'
 import QuizResult from './quiz-result'
+import { cn } from '@/lib/utils'
+
+function scoreColor(score: number) {
+  if (score >= 80) return 'text-green-500'
+  if (score >= 60) return 'text-yellow-500'
+  return 'text-rose-500'
+}
 
 export default function QuizList({ assessments }: { assessments: Assessment[] }) {
   const router = useRouter()
   const [selectedQuiz, setSelectedQuiz] = useState<QuizResultData | null>(null)
 
-  const toResultData = (assessment: Assessment): QuizResultData => ({
-    score: assessment.score,
-    questions: assessment.questions,
-    improvementTip: assessment.improvementTips?.[0] ?? null,
+  const toResultData = (a: Assessment): QuizResultData => ({
+    score: a.score,
+    questions: a.questions,
+    improvementTip: a.improvementTips?.[0] ?? null,
   })
 
   return (
@@ -33,65 +40,57 @@ export default function QuizList({ assessments }: { assessments: Assessment[] })
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="gradient-title text-3xl md:text-4xl">
-                Recent Quizzes
-              </CardTitle>
-              <CardDescription>
-                Review your past quiz performance
-              </CardDescription>
-            </div>
+            <CardTitle className="gradient-title text-2xl">Recent Quizzes</CardTitle>
             <Button
-              onClick={() => router.navigate({ to: '/app/interview/mock' })}
+              size="sm"
+              variant="outline"
+              onClick={() => router.navigate({ to: '/app/interview/mock', search: { skillFocus: undefined, category: 'technical', difficulty: 'mid', count: 10, autoStart: false } })}
             >
-              Start New Quiz
+              New Quiz
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {assessments?.map((assessment, i) => (
-              <Card
-                key={assessment.id}
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSelectedQuiz(toResultData(assessment))}
+          <div className="divide-y divide-border">
+            {assessments.map((a, i) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setSelectedQuiz(toResultData(a))}
+                className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-muted/30 transition-colors px-1 rounded"
               >
-                <CardHeader>
-                  <CardTitle className="gradient-title text-2xl">
-                    Quiz {i + 1}
-                  </CardTitle>
-                  <CardDescription className="flex justify-between w-full">
-                    <div>Score: {assessment.score.toFixed(1)}%</div>
-                    <div>
-                      {format(
-                        new Date(assessment.createdAt),
-                        'MMMM dd, yyyy HH:mm',
-                      )}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs text-muted-foreground w-5 shrink-0">#{assessments.length - i}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">
+                        {a.skillFocus?.length ? a.skillFocus.join(', ') : a.category}
+                      </span>
+                      <Badge variant="outline" className="text-[10px] py-0">{a.category}</Badge>
                     </div>
-                  </CardDescription>
-                </CardHeader>
-                {assessment.improvementTips?.[0] && (
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {assessment.improvementTips[0]}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(a.createdAt), 'MMM d, yyyy · h:mm a')}
                     </p>
-                  </CardContent>
-                )}
-              </Card>
+                  </div>
+                </div>
+                <span className={cn('text-base font-bold tabular-nums shrink-0', scoreColor(a.score))}>
+                  {Math.round(a.score)}%
+                </span>
+              </button>
             ))}
           </div>
         </CardContent>
       </Card>
 
       <Dialog open={!!selectedQuiz} onOpenChange={() => setSelectedQuiz(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle></DialogTitle>
+            <DialogTitle className="sr-only">Quiz Result</DialogTitle>
           </DialogHeader>
           <QuizResult
             result={selectedQuiz}
             hideStartNew
-            onStartNew={() => router.navigate({ to: '/app/interview/mock' })}
+            onStartNew={() => router.navigate({ to: '/app/interview/mock', search: { skillFocus: undefined, category: 'technical', difficulty: 'mid', count: 10, autoStart: false } })}
           />
         </DialogContent>
       </Dialog>

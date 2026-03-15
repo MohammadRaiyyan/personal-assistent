@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { type Response } from "express";
 import db from "../../db/index.ts";
-import { coverLetters, userProfiles } from "../../db/schema.ts";
+import { coverLetters, resumes, userProfiles } from "../../db/schema.ts";
 import { type AuthenticatedRequest } from "../../middlewares/authenticate.ts";
 import { generateCoverLetter } from "../../prompts/index.ts";
 
@@ -70,8 +70,10 @@ export async function getGenerateCoverLetter(req: AuthenticatedRequest, res: Res
             })
         }
         const { bio, experience, skills, industry } = userProfile;
+        const resume = await db.query.resumes.findFirst({ where: eq(resumes.userId, userId) })
         const result = await generateCoverLetter({
-            bio, companyName, experience, industry, jobDescription, jobTitle: positionTitle, skills
+            bio, companyName, experience, industry, jobDescription, jobTitle: positionTitle, skills,
+            resumeContent: resume?.content,
         });
 
         const [coverLetter] = await db.insert(coverLetters).values({

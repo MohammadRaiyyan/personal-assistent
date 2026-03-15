@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -10,7 +9,7 @@ import {
 import { useAuthContext } from '@/context/auth-context'
 import { useAppForm } from '@/hooks/demo.form'
 import { signUpSchema } from '@/schema/auth'
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth/register')({
@@ -18,8 +17,7 @@ export const Route = createFileRoute('/auth/register')({
 })
 
 function RouteComponent() {
-  const { signup, loginWithProvider } = useAuthContext()
-  const router = useRouter()
+  const { signup } = useAuthContext()
 
   const form = useAppForm({
     defaultValues: {
@@ -33,8 +31,7 @@ function RouteComponent() {
     onSubmit: async ({ value }) => {
       try {
         await signup(value)
-        await router.invalidate()
-        router.navigate({ to: '/app/onboarding' })
+        window.location.href = '/app/onboarding'
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Registration failed')
       }
@@ -92,31 +89,6 @@ function RouteComponent() {
         </form>
       </CardContent>
       <CardFooter className="flex flex-col gap-3 items-start text-muted-foreground">
-        <div className="flex items-center justify-center gap-2 w-full">
-          <span className="h-[0.1px] flex w-full bg-border"></span>
-          <p className="text-xs flex-1 text-nowrap">OR CONTINUE WITH</p>
-          <span className="h-[0.1px] flex w-full bg-border"></span>
-        </div>
-        <div className="flex items-center gap-4 w-full">
-          <Button
-            className="flex-1 w-full"
-            variant={'outline'}
-            type="button"
-            onClick={() => loginWithProvider('google')}
-          >
-            <img src="/icons/google.svg" alt="Google" />
-            Google
-          </Button>
-          <Button
-            className="flex-1 w-full"
-            variant={'outline'}
-            type="button"
-            onClick={() => loginWithProvider('github')}
-          >
-            <img src="/icons/github.svg" alt="GitHub" />
-            Github
-          </Button>
-        </div>
         <p className="text-sm">
           Already have an account?{' '}
           <Link to="/auth/login" className="text-primary">

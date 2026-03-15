@@ -79,6 +79,59 @@ export const generateAIInsights = async (params: GenerateInsightProps): Promise<
 
 };
 
+// ── Resume JSON → readable text for AI prompts ───────────────────────────────
+
+function formatResumeForAI(content: string): string {
+  try {
+    const parsed = JSON.parse(content)
+    if (!parsed?.data) return content
+    const { data } = parsed
+    const lines: string[] = []
+
+    const ci = data.contactInfo ?? {}
+    const contacts = [
+      ci.email,
+      ci.mobile,
+      ...((ci.links ?? []) as Array<{ label: string; url: string }>)
+        .filter((l) => l.url)
+        .map((l) => `${l.label}: ${l.url}`),
+    ].filter(Boolean)
+    if (contacts.length) lines.push(`Contact: ${contacts.join(' | ')}`)
+
+    if (data.summary) lines.push(`\nSummary:\n${data.summary}`)
+    if (data.skills) lines.push(`\nSkills:\n${data.skills}`)
+
+    const fmtEntry = (e: Record<string, string | boolean>) => {
+      const dates = [e.startDate, e.current ? 'Present' : e.endDate].filter(Boolean).join(' – ')
+      const header = [e.title, e.organization].filter(Boolean).join(' at ')
+      const bullets = e.bullets
+        ? String(e.bullets).split('\n').map((b) => `    ${b}`).join('\n')
+        : ''
+      return `  ${header}${dates ? ` (${dates})` : ''}${bullets ? `\n${bullets}` : ''}`
+    }
+
+    const sections: Array<{ key: string; label: string }> = [
+      { key: 'experience', label: 'Experience' },
+      { key: 'education', label: 'Education' },
+      { key: 'projects', label: 'Projects' },
+    ]
+    for (const { key, label } of sections) {
+      const entries = (data[key] ?? []) as Array<Record<string, string | boolean>>
+      const filled = entries.filter((e) => e.title || e.bullets)
+      if (filled.length) {
+        lines.push(`\n${label}:`)
+        filled.forEach((e) => lines.push(fmtEntry(e)))
+      }
+    }
+
+    return lines.join('\n')
+  } catch {
+    return content
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface GenerateCoverLetterProps {
   jobTitle: string,
   companyName: string,
@@ -86,32 +139,36 @@ interface GenerateCoverLetterProps {
   experience: number,
   skills: string[],
   bio: string,
-  jobDescription: string
+  jobDescription: string,
+  resumeContent?: string,
 }
 export const generateCoverLetter = async (params: GenerateCoverLetterProps) => {
+  const resumeSection = params.resumeContent
+    ? `\nCandidate's Resume:\n${formatResumeForAI(params.resumeContent)}\n`
+    : ''
+
   const prompt = `
-    Write a professional cover letter for a ${params.jobTitle} position at ${params.companyName
-    }.
-    
+    Write a professional cover letter for a ${params.jobTitle} position at ${params.companyName}.
+
     About the candidate:
     - Industry: ${params.industry}
     - Years of Experience: ${params.experience}
     - Skills: ${params.skills?.join(", ")}
     - Professional Background: ${params.bio}
-    
+    ${resumeSection}
     Job Description:
     ${params.jobDescription}
-    
+
     Requirements:
     1. Use a professional, enthusiastic tone
-    2. Highlight relevant skills and experience
+    2. Highlight relevant skills and experience that match the job description specifically
     3. Show understanding of the company's needs
     4. Keep it concise (max 400 words)
     5. Use proper business letter formatting in markdown
-    6. Include specific examples of achievements
+    6. Include specific examples of achievements drawn from the resume if provided
     7. Relate candidate's background to job requirements
-    
-    Format the letter in markdown.
+
+    Format the letter in markdown. Output only the letter content, no preamble.
   `;
 
 
@@ -133,24 +190,38 @@ export const generateCoverLetter = async (params: GenerateCoverLetterProps) => {
 export interface ImproveResumeParams {
   type: "experience" | "project" | "summary" | "education",
   content: string,
-  industry: string
+  industry: string,
+  skills?: string[],
+  experience?: number,
+  bio?: string,
 }
 
 export const improveResume = async (params: ImproveResumeParams) => {
+  const profileContext = [
+    params.experience !== undefined && `- Years of experience: ${params.experience}`,
+    params.skills?.length && `- Core skills: ${params.skills.join(", ")}`,
+    params.bio && `- Professional background: ${params.bio}`,
+  ].filter(Boolean).join("\n")
+
   const prompt = `
-    As an expert resume writer, improve the following ${params.type} description for a ${params.industry} professional.
-    Make it more impactful, quantifiable, and aligned with industry standards.
-    Current content: "${params.content}"
+    You are an expert resume writer. Improve the following ${params.type} section for a ${params.industry} professional.
+
+    Candidate profile:
+    ${profileContext || "- No additional profile data provided"}
+
+    Content to improve:
+    "${params.content}"
 
     Requirements:
-    1. Use action verbs
-    2. Include metrics and results where possible
-    3. Highlight relevant technical skills
-    4. Keep it concise but detailed
-    5. Focus on achievements over responsibilities
-    6. Use industry-specific keywords
-    
-    Format the response as a single paragraph without any additional text or explanations.
+    1. Use strong action verbs and quantifiable achievements
+    2. Weave in the candidate's skills naturally where relevant
+    3. Match the tone and seniority to their experience level
+    4. Use ${params.industry}-specific keywords and terminology
+    5. Keep it concise — no fluff, no vague statements
+    6. Focus on impact and outcomes, not just responsibilities
+    ${params.type !== "summary" ? "7. Return as markdown bullet points, one per line, each starting with '- '. Use **bold** for key metrics, skills, or standout achievements. No other markdown." : "7. Return as a single concise paragraph. No markdown formatting."}
+
+    Return only the improved text with no explanation or preamble.
   `;
 
   try {
@@ -174,6 +245,8 @@ export interface GenerateQuizParams {
   category: "technical" | "behavioral",
   difficulty: "junior" | "mid" | "senior" | "lead" | "staff",
   count: number,
+  skillFocus?: string[],
+  previousQuestions?: string[],
 }
 
 const difficultyLabel: Record<GenerateQuizParams["difficulty"], string> = {
@@ -192,17 +265,36 @@ export const generateQuiz = async (params: GenerateQuizParams) => {
 
     Candidate profile:
     - Experience: ${params.experience} years
-    - Skills: ${params.skills?.join(", ") || "general"}
+    - Topic: ${params.skillFocus?.length ? params.skillFocus.join(", ") : (params.skills?.join(", ") || "general")}
     - Target level: ${level}
+    ${params.skillFocus?.length
+      ? `STRICT REQUIREMENT: Every single question must be exclusively and directly about ${params.skillFocus.join(", ")}. Do NOT drift into related technologies (e.g. if the topic is React, do not ask about Node.js, Express, JavaScript fundamentals, or any other library). Every question must clearly test ${params.skillFocus.join(", ")} knowledge specifically.`
+      : ""
+    }
 
     ${isTechnical
-      ? `Focus on technical depth appropriate for ${level}. Include questions on system design, coding patterns, or architecture for senior/lead/staff levels. For junior/mid, focus on fundamentals and problem-solving.
+      ? `Question depth must strictly match ${level}:
+      - Junior (0–2 yrs): syntax, basic usage, core concepts, "what does X do", simple debugging
+      - Mid-level (2–5 yrs): practical patterns, common pitfalls, "how would you implement X", tradeoffs between approaches
+      - Senior (5–8 yrs): advanced internals, performance optimisation, architectural patterns, "design X at scale"
+      - Lead/Principal (8+ yrs): system design decisions, cross-team patterns, scalability, "how would you architect X for a large team"
+      - Staff/FAANG: deep internals, novel tradeoffs, open-ended architectural challenges, questions that have no single right answer
 
-      For questions that involve reading or analyzing code, include the code snippet in a "code" field (as a string with newlines escaped). For concept/theory questions, omit the "code" field.
-      All technical questions MUST have 4 "options" and a "correctAnswer" (exact match to one of the options).`
-      : `Focus on behavioral questions using STAR format scenarios relevant to ${level}. Include leadership, conflict resolution, and impact-driven questions scaled to the target level.
+      For questions that involve reading or analysing code, include the snippet in a "code" field. For concept questions, omit "code".
+      All technical questions MUST have exactly 4 "options" and a "correctAnswer" that is an exact match to one of the options.`
+      : `Behavioral question depth must match ${level}:
+      - Junior: basic teamwork, asking for help, handling feedback
+      - Mid-level: owning deliverables, cross-team communication, dealing with ambiguity
+      - Senior: influencing without authority, driving projects, handling failure at scale
+      - Lead/Principal: org-level decisions, mentoring, trade-off communication to stakeholders
+      - Staff/FAANG: company-wide impact, building culture, navigating complex political situations
 
-      Behavioral questions should NOT have options or a correctAnswer — they are open-ended. Omit the "options" and "correctAnswer" fields entirely for behavioral questions. The "explanation" field should describe what a strong answer looks like.`
+      Behavioral questions must be open-ended — no "options" or "correctAnswer" fields. The "explanation" field must describe what a strong STAR-format answer looks like at ${level}.`
+    }
+
+    ${params.previousQuestions?.length
+      ? `The user just answered these questions in their last session — avoid repeating them directly, but similar concepts may reappear if they are fundamental to the topic:\n${params.previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}`
+      : ""
     }
 
     Return ONLY this JSON format, no additional text:

@@ -20,7 +20,6 @@ const router = createRouter({
     ...TanStackQueryProviderContext,
     auth: {
       session: null,
-      profile: null,
       isAuthenticated: false,
       login: () => Promise.resolve(),
       signup: () => Promise.resolve(),
@@ -32,6 +31,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultPendingMs: 50,
 })
 
 // Register the router instance for type safety

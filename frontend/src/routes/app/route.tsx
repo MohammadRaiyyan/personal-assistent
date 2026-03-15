@@ -1,8 +1,8 @@
 import Header from '@/components/features/common/header'
 import { Spinner } from '@/components/ui/spinner'
 import { api } from '@/lib/api'
-import type { UserProfile } from '../../../../shared/types/api'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import type { UserProfile } from '../../../../shared/types/api'
 
 export const Route = createFileRoute('/app')({
   beforeLoad: ({
@@ -46,7 +46,7 @@ function RouteComponent() {
     <main className="flex h-screen w-screen flex-col">
       <Header />
       <div className=" h-[calc(100vh-3.5rem)] mt-14 overflow-y-auto">
-        <div className="container mx-auto p-4">
+        <div className=" p-4">
           <Outlet />
         </div>
       </div>

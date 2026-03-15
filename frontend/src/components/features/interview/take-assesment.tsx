@@ -15,7 +15,9 @@ export default function TakeAssessment() {
         </Link>
 
         <div>
-          <h1 className="text-4xl font-bold gradient-title">Mock Interview</h1>
+          <h1 className="text-3xl font-medium gradient-title">
+            Mock Interview
+          </h1>
           <p className="text-muted-foreground">
             Test your knowledge with industry-specific questions
           </p>

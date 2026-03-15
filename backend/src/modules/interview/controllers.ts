@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { Response } from "express";
 import db from "../../db/index.ts";
 import { assessments, userProfiles } from "../../db/schema.ts";
@@ -10,7 +10,7 @@ export async function saveQuizResult(req: AuthenticatedRequest, res: Response) {
     try {
         const { id: userId } = req.user!;
 
-        const { questions, answers, industry, category, difficulty, score } = req.body as SaveQuizType
+        const { questions, answers, industry, category, difficulty, score, skillFocus } = req.body as SaveQuizType
 
         const questionResults = questions.map((q, index) => ({
             question: q.question,
@@ -42,6 +42,7 @@ export async function saveQuizResult(req: AuthenticatedRequest, res: Response) {
             category,
             questions: questionResults,
             improvementTips,
+            skillFocus: skillFocus ?? null,
             score
         }).returning();
 
@@ -79,7 +80,7 @@ export async function getAssessments(req: AuthenticatedRequest, res: Response) {
 export async function takeAssessments(req: AuthenticatedRequest, res: Response) {
     try {
         const { id: userId } = req.user!;
-        const { category, difficulty, count } = req.body as TakeAssessmentType;
+        const { category, difficulty, count, skillFocus } = req.body as TakeAssessmentType;
 
         const userDetails = await db.query.userProfiles.findFirst({
             where: eq(userProfiles.userId, userId)
@@ -88,6 +89,24 @@ export async function takeAssessments(req: AuthenticatedRequest, res: Response) 
             res.status(400).json({ message: "User not found" })
             return;
         }
+        // Soft-avoid repeating questions from the most recent attempt only.
+        // We intentionally don't exclude older questions — spaced repetition means
+        // revisiting concepts periodically is valuable, especially at lower levels.
+        let previousQuestions: string[] = []
+        if (skillFocus?.length) {
+            const [lastAttempt] = await db.query.assessments.findMany({
+                where: and(
+                    eq(assessments.userId, userId),
+                    eq(assessments.category, category),
+                ),
+                orderBy: [desc(assessments.createdAt)],
+                limit: 1,
+            })
+            if (lastAttempt?.skillFocus?.some(s => skillFocus.includes(s))) {
+                previousQuestions = lastAttempt.questions.map(q => q.question)
+            }
+        }
+
         const results = await generateQuiz({
             industry: userDetails.industry,
             skills: userDetails.skills,
@@ -95,6 +114,8 @@ export async function takeAssessments(req: AuthenticatedRequest, res: Response) 
             category,
             difficulty,
             count,
+            skillFocus,
+            previousQuestions,
         });
 
         res.status(200).json({ message: "", data: results })

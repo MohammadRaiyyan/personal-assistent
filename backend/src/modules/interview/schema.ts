@@ -10,6 +10,7 @@ export const takeAssessmentSchema = z.object({
     category: z.enum(["technical", "behavioral"]),
     difficulty: z.enum(["junior", "mid", "senior", "lead", "staff"]),
     count: z.number().int().min(5).max(20).default(10),
+    skillFocus: z.array(z.string()).optional(),
 })
 
 export const saveQuizResultSchema = z.object({
@@ -18,7 +19,8 @@ export const saveQuizResultSchema = z.object({
     industry: z.string(),
     category: z.enum(["technical", "behavioral"]),
     difficulty: z.enum(["junior", "mid", "senior", "lead", "staff"]),
-    score: z.number()
+    score: z.number(),
+    skillFocus: z.array(z.string()).optional(),
 })
 
 export type TakeAssessmentType = z.infer<typeof takeAssessmentSchema>

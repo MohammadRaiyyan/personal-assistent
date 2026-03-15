@@ -12,12 +12,14 @@ const app = express();
 
 app.use(
     cors({
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST", "PUT", "DELETE"],
+        origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
         credentials: true,
     })
 );
 
+
+app.get("/api/health", (_req, res) => { res.json({ status: "ok" }) });
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 

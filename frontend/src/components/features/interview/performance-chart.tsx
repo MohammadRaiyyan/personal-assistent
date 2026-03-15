@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import type { Assessment } from '../../../../../shared/types/api'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 import {
@@ -17,10 +16,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { Assessment } from '../../../../../shared/types/api'
 
 type ChartPoint = { date: string; score: number }
 
-export default function PerformanceChart({ assessments }: { assessments: Assessment[] }) {
+export default function PerformanceChart({
+  assessments,
+}: {
+  assessments: Assessment[]
+}) {
   const [chartData, setChartData] = useState<ChartPoint[]>([])
 
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function PerformanceChart({ assessments }: { assessments: Assessm
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="gradient-title text-3xl md:text-4xl">
+        <CardTitle className="gradient-title text-2xl">
           Performance Trend
         </CardTitle>
         <CardDescription>Your quiz scores over time</CardDescription>

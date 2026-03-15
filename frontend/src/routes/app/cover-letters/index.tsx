@@ -1,6 +1,6 @@
-import CoverLetters from '@/components/features/cover-letter/cover-letters'
 import { RouteError } from '@/components/features/common/route-error'
 import { RoutePending } from '@/components/features/common/route-pending'
+import CoverLetters from '@/components/features/cover-letter/cover-letters'
 import { Button } from '@/components/ui/button'
 import { getCoverLetters } from '@/lib/coverLetterApi'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -21,7 +21,7 @@ function RouteComponent() {
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-2 items-center justify-between mb-5">
-        <h1 className="text-4xl font-medium gradient-title">
+        <h1 className="text-3xl font-medium gradient-title">
           My Cover Letters
         </h1>
         <Link to="/app/cover-letters/new">

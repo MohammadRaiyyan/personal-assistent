@@ -11,13 +11,18 @@ export async function getResume(id: string): Promise<Resume> {
     return res.data
 }
 
-export async function createResume(payload: { content: string }): Promise<Resume> {
+export async function createResume(payload: { content: string; title?: string }): Promise<Resume> {
     const res = await api.post<Resume>('/api/resume/', payload)
     return res.data
 }
 
-export async function updateResume(id: string, payload: { content: string }): Promise<Resume> {
+export async function updateResume(id: string, payload: { content?: string; title?: string }): Promise<Resume> {
     const res = await api.patch<Resume>(`/api/resume/${id}`, payload)
+    return res.data
+}
+
+export async function duplicateResume(id: string): Promise<Resume> {
+    const res = await api.post<Resume>(`/api/resume/${id}/duplicate`, {})
     return res.data
 }
 
@@ -30,4 +35,4 @@ export async function improveResume(payload: ImproveResumePayload): Promise<stri
     return res.data
 }
 
-export default { getResumes, getResume, createResume, updateResume, deleteResume, improveResume }
+export default { getResumes, getResume, createResume, updateResume, duplicateResume, deleteResume, improveResume }

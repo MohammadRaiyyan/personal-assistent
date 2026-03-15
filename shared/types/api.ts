@@ -79,6 +79,7 @@ export interface Assessment {
     id: string
     score: number
     category: string
+    skillFocus: string[] | null
     createdAt: string
     questions: AssessmentQuestion[]
     improvementTips: string[] | null
@@ -97,10 +98,61 @@ export interface SaveQuizPayload {
     category: 'technical' | 'behavioral'
     difficulty: 'junior' | 'mid' | 'senior' | 'lead' | 'staff'
     score: number
+    skillFocus?: string[]
 }
 
 export interface ImproveResumePayload {
     type: 'experience' | 'project' | 'summary' | 'education'
     content: string
     industry: string
+}
+
+// ── Resume builder structured data ──────────────────────────────────────────
+
+export interface ResumeStyles {
+    fontFamily: 'georgia' | 'arial' | 'times' | 'calibri'
+    fontSize: 11 | 12 | 13
+    lineHeight: 1.3 | 1.45 | 1.6
+    accentColor: string
+    pageMargin: 24 | 32 | 40
+    sectionTitleCase: 'upper' | 'title' | 'lower'
+    sectionLabels: {
+        summary: string
+        skills: string
+        experience: string
+        education: string
+        projects: string
+    }
+}
+
+export interface ResumeEntry {
+    title: string
+    organization: string
+    startDate: string
+    endDate: string
+    current: boolean
+    bullets: string   // newline-separated bullet points
+}
+
+export interface ResumeLink {
+    label: string
+    url: string
+}
+
+export interface ResumeData {
+    contactInfo: {
+        email: string
+        mobile: string
+        links: ResumeLink[]
+    }
+    summary: string
+    skills: string    // comma-separated or markdown
+    experience: ResumeEntry[]
+    education: ResumeEntry[]
+    projects: ResumeEntry[]
+}
+
+export interface ResumeContent {
+    styles: ResumeStyles
+    data: ResumeData
 }

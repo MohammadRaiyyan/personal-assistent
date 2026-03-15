@@ -124,6 +124,7 @@ export const assessments = pgTable("assessments", {
     score: doublePrecision("score").notNull(),
     questions: json("questions").$type<Array<{ question: string; answer: string; isCorrect: boolean, userAnswer: string, explanation: string }>>().notNull(),
     improvementTips: text("improvement_tips").array(),
+    skillFocus: text("skill_focus").array(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()

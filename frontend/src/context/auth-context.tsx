@@ -61,7 +61,7 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
 
   if (isPending) {
     return (
-      <div className="flex items-center gap-4">
+      <div className="h-screen w-screen flex justify-center items-center gap-4">
         <Spinner />
       </div>
     )

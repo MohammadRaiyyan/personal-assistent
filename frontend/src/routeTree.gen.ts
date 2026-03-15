@@ -15,10 +15,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppResumeRouteImport } from './routes/app/resume'
 import { Route as AppOnboardingRouteImport } from './routes/app/onboarding'
+import { Route as AppResumeIndexRouteImport } from './routes/app/resume/index'
 import { Route as AppInterviewIndexRouteImport } from './routes/app/interview/index'
 import { Route as AppCoverLettersIndexRouteImport } from './routes/app/cover-letters/index'
+import { Route as AppResumeIdRouteImport } from './routes/app/resume/$id'
 import { Route as AppInterviewMockRouteImport } from './routes/app/interview/mock'
 import { Route as AppCoverLettersNewRouteImport } from './routes/app/cover-letters/new'
 import { Route as AppCoverLettersIdRouteImport } from './routes/app/cover-letters/$id'
@@ -53,6 +56,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppResumeRoute = AppResumeRouteImport.update({
   id: '/resume',
   path: '/resume',
@@ -63,6 +71,11 @@ const AppOnboardingRoute = AppOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppResumeIndexRoute = AppResumeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppResumeRoute,
+} as any)
 const AppInterviewIndexRoute = AppInterviewIndexRouteImport.update({
   id: '/interview/',
   path: '/interview/',
@@ -72,6 +85,11 @@ const AppCoverLettersIndexRoute = AppCoverLettersIndexRouteImport.update({
   id: '/cover-letters/',
   path: '/cover-letters/',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const AppResumeIdRoute = AppResumeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppResumeRoute,
 } as any)
 const AppInterviewMockRoute = AppInterviewMockRouteImport.update({
   id: '/interview/mock',
@@ -94,29 +112,34 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteRouteWithChildren
   '/auth': typeof AuthRouteRouteWithChildren
   '/app/onboarding': typeof AppOnboardingRoute
-  '/app/resume': typeof AppResumeRoute
+  '/app/resume': typeof AppResumeRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app/': typeof AppIndexRoute
   '/app/cover-letters/$id': typeof AppCoverLettersIdRoute
   '/app/cover-letters/new': typeof AppCoverLettersNewRoute
   '/app/interview/mock': typeof AppInterviewMockRoute
+  '/app/resume/$id': typeof AppResumeIdRoute
   '/app/cover-letters/': typeof AppCoverLettersIndexRoute
   '/app/interview/': typeof AppInterviewIndexRoute
+  '/app/resume/': typeof AppResumeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/app/onboarding': typeof AppOnboardingRoute
-  '/app/resume': typeof AppResumeRoute
+  '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app': typeof AppIndexRoute
   '/app/cover-letters/$id': typeof AppCoverLettersIdRoute
   '/app/cover-letters/new': typeof AppCoverLettersNewRoute
   '/app/interview/mock': typeof AppInterviewMockRoute
+  '/app/resume/$id': typeof AppResumeIdRoute
   '/app/cover-letters': typeof AppCoverLettersIndexRoute
   '/app/interview': typeof AppInterviewIndexRoute
+  '/app/resume': typeof AppResumeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,15 +147,18 @@ export interface FileRoutesById {
   '/app': typeof AppRouteRouteWithChildren
   '/auth': typeof AuthRouteRouteWithChildren
   '/app/onboarding': typeof AppOnboardingRoute
-  '/app/resume': typeof AppResumeRoute
+  '/app/resume': typeof AppResumeRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app/': typeof AppIndexRoute
   '/app/cover-letters/$id': typeof AppCoverLettersIdRoute
   '/app/cover-letters/new': typeof AppCoverLettersNewRoute
   '/app/interview/mock': typeof AppInterviewMockRoute
+  '/app/resume/$id': typeof AppResumeIdRoute
   '/app/cover-letters/': typeof AppCoverLettersIndexRoute
   '/app/interview/': typeof AppInterviewIndexRoute
+  '/app/resume/': typeof AppResumeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,28 +168,33 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/onboarding'
     | '/app/resume'
+    | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app/'
     | '/app/cover-letters/$id'
     | '/app/cover-letters/new'
     | '/app/interview/mock'
+    | '/app/resume/$id'
     | '/app/cover-letters/'
     | '/app/interview/'
+    | '/app/resume/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/app/onboarding'
-    | '/app/resume'
+    | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app'
     | '/app/cover-letters/$id'
     | '/app/cover-letters/new'
     | '/app/interview/mock'
+    | '/app/resume/$id'
     | '/app/cover-letters'
     | '/app/interview'
+    | '/app/resume'
   id:
     | '__root__'
     | '/'
@@ -171,14 +202,17 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/onboarding'
     | '/app/resume'
+    | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app/'
     | '/app/cover-letters/$id'
     | '/app/cover-letters/new'
     | '/app/interview/mock'
+    | '/app/resume/$id'
     | '/app/cover-letters/'
     | '/app/interview/'
+    | '/app/resume/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/resume': {
       id: '/app/resume'
       path: '/resume'
@@ -245,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOnboardingRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/resume/': {
+      id: '/app/resume/'
+      path: '/'
+      fullPath: '/app/resume/'
+      preLoaderRoute: typeof AppResumeIndexRouteImport
+      parentRoute: typeof AppResumeRoute
+    }
     '/app/interview/': {
       id: '/app/interview/'
       path: '/interview'
@@ -258,6 +306,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/cover-letters/'
       preLoaderRoute: typeof AppCoverLettersIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/app/resume/$id': {
+      id: '/app/resume/$id'
+      path: '/$id'
+      fullPath: '/app/resume/$id'
+      preLoaderRoute: typeof AppResumeIdRouteImport
+      parentRoute: typeof AppResumeRoute
     }
     '/app/interview/mock': {
       id: '/app/interview/mock'
@@ -283,9 +338,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppResumeRouteChildren {
+  AppResumeIdRoute: typeof AppResumeIdRoute
+  AppResumeIndexRoute: typeof AppResumeIndexRoute
+}
+
+const AppResumeRouteChildren: AppResumeRouteChildren = {
+  AppResumeIdRoute: AppResumeIdRoute,
+  AppResumeIndexRoute: AppResumeIndexRoute,
+}
+
+const AppResumeRouteWithChildren = AppResumeRoute._addFileChildren(
+  AppResumeRouteChildren,
+)
+
 interface AppRouteRouteChildren {
   AppOnboardingRoute: typeof AppOnboardingRoute
-  AppResumeRoute: typeof AppResumeRoute
+  AppResumeRoute: typeof AppResumeRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCoverLettersIdRoute: typeof AppCoverLettersIdRoute
   AppCoverLettersNewRoute: typeof AppCoverLettersNewRoute
@@ -296,7 +366,8 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppOnboardingRoute: AppOnboardingRoute,
-  AppResumeRoute: AppResumeRoute,
+  AppResumeRoute: AppResumeRouteWithChildren,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCoverLettersIdRoute: AppCoverLettersIdRoute,
   AppCoverLettersNewRoute: AppCoverLettersNewRoute,

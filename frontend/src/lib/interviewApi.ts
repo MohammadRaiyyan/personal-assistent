@@ -6,7 +6,12 @@ export async function getAssessments(): Promise<Assessment[]> {
     return res.data
 }
 
-export async function takeAssessments(payload: { category: 'technical' | 'behavioral'; difficulty: 'junior' | 'mid' | 'senior' | 'lead' | 'staff'; count: number }): Promise<QuizQuestion[]> {
+export async function takeAssessments(payload: {
+    category: 'technical' | 'behavioral'
+    difficulty: 'junior' | 'mid' | 'senior' | 'lead' | 'staff'
+    count: number
+    skillFocus?: string[]
+}): Promise<QuizQuestion[]> {
     const res = await api.post<QuizQuestion[]>('/api/interview/take-assessments', payload)
     return res.data
 }

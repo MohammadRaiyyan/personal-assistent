@@ -1,6 +1,6 @@
 import type { APIResponse } from '../../../shared/types/api'
 
-const BASE_URL = 'http://localhost:4000'
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<APIResponse<T>> {
     const res = await fetch(`${BASE_URL}${path}`, {
