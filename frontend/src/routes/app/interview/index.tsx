@@ -7,6 +7,12 @@ import type { Assessment, Insight } from '../../../../../shared/types/api'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/interview/')({
+  head: () => ({
+    meta: [
+      { title: 'Interview Prep — TrajectAI' },
+      { name: 'description', content: 'Practice with AI-powered mock interviews, skill assessments, and personalized feedback.' },
+    ],
+  }),
   loader: async (): Promise<{ assessments: Assessment[]; insights: Insight | null }> => {
     const [assessments, insightsRes] = await Promise.all([
       getAssessments(),

@@ -3,6 +3,12 @@ import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { ArrowRight, BookOpen, Brain, FileText, Sparkles, TrendingUp } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: [
+      { title: 'TrajectAI — AI-Powered Career Assistant' },
+      { name: 'description', content: 'Ace your job search with AI-generated resumes, cover letters, and interview prep tailored to your career goals.' },
+    ],
+  }),
   beforeLoad: ({ context: { auth: { isAuthenticated } } }) => {
     if (isAuthenticated) throw redirect({ to: '/app' })
   },

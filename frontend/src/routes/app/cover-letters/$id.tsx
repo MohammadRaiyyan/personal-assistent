@@ -8,6 +8,12 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/app/cover-letters/$id')({
+  head: () => ({
+    meta: [
+      { title: 'Cover Letter — TrajectAI' },
+      { name: 'description', content: 'View, edit, and download your AI-generated cover letter.' },
+    ],
+  }),
   staleTime: 30_000,
   loader: async ({ params }): Promise<CoverLetter> => {
     return await getCoverLetter(params.id)

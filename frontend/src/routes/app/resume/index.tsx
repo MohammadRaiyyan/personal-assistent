@@ -5,6 +5,12 @@ import { getResumes } from '@/lib/resumeApi'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/resume/')({
+  head: () => ({
+    meta: [
+      { title: 'Resumes — TrajectAI' },
+      { name: 'description', content: 'Build and manage ATS-optimized resumes with AI assistance.' },
+    ],
+  }),
   loader: async () => getResumes(),
   pendingComponent: RoutePending,
   errorComponent: ({ error }) => <RouteError error={error} />,

@@ -6,6 +6,12 @@ import type { Insight } from '../../../../shared/types/api'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/')({
+  head: () => ({
+    meta: [
+      { title: 'Dashboard — TrajectAI' },
+      { name: 'description', content: 'Your AI-powered career dashboard — market insights, salary trends, and personalized recommendations.' },
+    ],
+  }),
   loader: async (): Promise<Insight | null> => {
     const res = await api.get<Insight[]>('/api/insight/industry-insights')
     if (res.data[0]) return res.data[0]

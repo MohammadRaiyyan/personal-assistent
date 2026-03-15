@@ -13,6 +13,12 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth/login')({
+  head: () => ({
+    meta: [
+      { title: 'Login — TrajectAI' },
+      { name: 'description', content: 'Sign in to your TrajectAI account to access your career dashboard.' },
+    ],
+  }),
   component: RouteComponent,
 })
 

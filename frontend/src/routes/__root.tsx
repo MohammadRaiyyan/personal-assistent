@@ -1,6 +1,6 @@
 import { Toaster } from '@/components/ui/sonner'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
+import { HeadContent, Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
@@ -14,9 +14,16 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  head: () => ({
+    meta: [
+      { title: 'TrajectAI' },
+      { name: 'description', content: 'AI-powered career assistant for resumes, cover letters, and interview prep.' },
+      { property: 'og:site_name', content: 'TrajectAI' },
+    ],
+  }),
   component: () => (
     <>
-      {/* <Header /> */}
+      <HeadContent />
       <Outlet />
       <Toaster />
       <TanStackDevtools

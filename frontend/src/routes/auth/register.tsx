@@ -13,6 +13,12 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth/register')({
+  head: () => ({
+    meta: [
+      { title: 'Create Account — TrajectAI' },
+      { name: 'description', content: 'Create your free TrajectAI account and start building your career with AI.' },
+    ],
+  }),
   component: RouteComponent,
 })
 

@@ -5,6 +5,12 @@ type Difficulty = 'junior' | 'mid' | 'senior' | 'lead' | 'staff'
 type Category = 'technical' | 'behavioral'
 
 export const Route = createFileRoute('/app/interview/mock')({
+  head: () => ({
+    meta: [
+      { title: 'Mock Interview — TrajectAI' },
+      { name: 'description', content: 'Test your skills with an AI-generated quiz tailored to your role and difficulty level.' },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => ({
     skillFocus: typeof search.skillFocus === 'string' ? search.skillFocus : undefined,
     category: (['technical', 'behavioral'].includes(search.category as string)
