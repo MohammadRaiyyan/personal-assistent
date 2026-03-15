@@ -85,11 +85,6 @@ Tailwind v4 uses CSS custom properties with `oklch()` colors. `html2canvas` reso
 ### 3. Auth Transition Flicker with TanStack Router
 After login, calling `router.invalidate()` re-ran `beforeLoad` guards using the *stale* React context (`isAuthenticated: false`) before the new session was reflected — causing a flash back to the login page. Fix: replace `router.navigate()` + `router.invalidate()` with `window.location.href = '/app'`. The hard reload starts a fresh React tree with the session cookie already set.
 
-### 4. Nested `<button>` Hydration Error
-The collapsible `Section` component used a `<button>` as its header toggle. When an AI action button was passed as the `action` prop, it rendered a `<button>` inside a `<button>` — invalid HTML. Fix: changed the outer element to `<div role="button" tabIndex={0}>` with a `onKeyDown` handler, with the action button as a sibling outside the clickable area.
-
-### 5. Structured AI Output
-All Gemini prompts instruct the model to return JSON-only with no markdown fences. The response is parsed with `JSON.parse()` and validated against expected shape. This is more reliable than asking for prose and extracting data from it — and gives consistent typed output for every AI feature.
 
 ---
 
