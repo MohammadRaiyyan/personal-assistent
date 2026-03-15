@@ -40,6 +40,7 @@ const Onboarding = () => {
   const [step, setStep] = useState(0)
   const currentStep = STEPS[step]
 
+
   const { mutateAsync: onboard } = useMutation({
     mutationFn: async (data: z.infer<typeof onboardingSchema>) =>
       api.post('/api/user/profile', data),
@@ -78,13 +79,6 @@ const Onboarding = () => {
   })
 
   const progress = ((step + 1) / STEPS.length) * 100
-
-  const canAdvance = () => {
-    const vals = form.store.state.values
-    if (step === 0) return vals.industry && vals.subIndustry
-    if (step === 1) return vals.experience && vals.skills && vals.country
-    return true
-  }
 
   return (
     <div className="w-full max-w-xl space-y-6">
@@ -256,14 +250,25 @@ const Onboarding = () => {
                 </Button>
               )}
               {step < STEPS.length - 1 ? (
-                <Button
-                  type="button"
-                  className="flex-1"
-                  disabled={!canAdvance()}
-                  onClick={() => setStep((s) => s + 1)}
+                <form.Subscribe
+                  selector={(state) => state.values}
                 >
-                  Continue →
-                </Button>
+                  {(vals) => {
+                    const canAdvance = step === 0
+                      ? !!(vals.industry && vals.subIndustry)
+                      : !!(vals.experience && vals.skills && vals.country)
+                    return (
+                      <Button
+                        type="button"
+                        className="flex-1"
+                        disabled={!canAdvance}
+                        onClick={() => setStep((s) => s + 1)}
+                      >
+                        Continue →
+                      </Button>
+                    )
+                  }}
+                </form.Subscribe>
               ) : (
                 <form.AppForm>
                   <form.SubscribeButton label="Finish setup →" />
