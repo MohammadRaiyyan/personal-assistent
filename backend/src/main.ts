@@ -10,14 +10,25 @@ import { userRoutes } from './modules/user/routes.ts';
 
 const app = express();
 
-app.use(
-    cors({
-        origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-        credentials: true,
-    })
-);
+const allowedOrigins = [
+    "http://localhost:3000",
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, "")] : []),
+];
 
+const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+        // allow requests with no origin (curl, mobile apps, server-to-server)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // handle preflight for all routes
 
 app.get("/api/health", (_req, res) => { res.json({ status: "ok" }) });
 
@@ -33,4 +44,3 @@ app.use("/api/insight", insightRoutes)
 export { app };
 
 export default app;
-
