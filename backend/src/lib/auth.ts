@@ -20,6 +20,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     }
 }
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg",
@@ -33,6 +35,13 @@ export const auth = betterAuth({
         enabled: true,
     },
     socialProviders,
+    advanced: {
+        // Cross-origin deployments (Vercel + Render) need SameSite=None; Secure
+        // so the browser sends the session cookie on cross-origin requests.
+        defaultCookieAttributes: isProd
+            ? { sameSite: "none", secure: true, httpOnly: true, partitioned: true }
+            : {},
+    },
 });
 
 export const getAuthContext = async (headers: Request["headers"]) => {
