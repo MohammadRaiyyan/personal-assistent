@@ -3,6 +3,5 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci",
   "framework": "vite",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- frontend/ shared/"
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
