@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { industries } from '@/constants/onboarding'
 import { useAppForm } from '@/hooks/demo.form'
@@ -121,12 +121,10 @@ const Onboarding = () => {
 
       {/* Form */}
       <Card>
-        <CardHeader className="pb-0">
+        <CardContent className="pt-5 space-y-4">
           <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 border-l-2 border-primary/40">
             💡 {currentStep.hint}
           </p>
-        </CardHeader>
-        <CardContent className="pt-4">
           <form
             onSubmit={(e) => {
               e.preventDefault()
