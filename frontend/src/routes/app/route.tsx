@@ -5,10 +5,8 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import type { UserProfile } from '../../../../shared/types/api'
 
 export const Route = createFileRoute('/app')({
-  beforeLoad: ({
-    context: {
-      auth: { isAuthenticated },
-    },
+  beforeLoad: async ({
+    context: { auth: { isAuthenticated } },
     location,
   }) => {
     if (!isAuthenticated) {
@@ -17,20 +15,21 @@ export const Route = createFileRoute('/app')({
         search: { redirectTo: location.pathname },
       })
     }
-  },
-  loaderDeps: () => ({}),
-  staleTime: Infinity,
-  loader: async ({ location }): Promise<UserProfile | null> => {
+    // Profile check runs here — before any child loaders fire —
+    // so the insight/resume/etc loaders never run for un-onboarded users.
     try {
       const res = await api.get<UserProfile>('/api/user/profile')
       const profile = res.data ?? null
       if (!profile?.onboarded && location.pathname !== '/app/onboarding') {
         throw redirect({ to: '/app/onboarding' })
       }
-      return profile
+      return { profile }
     } catch (e) {
       if ((e as { isRedirect?: boolean })?.isRedirect) throw e
-      return null
+      if ((e as { status?: number })?.status === 401) {
+        throw redirect({ to: '/auth/login' })
+      }
+      return { profile: null as UserProfile | null }
     }
   },
   pendingComponent: () => (

@@ -8,7 +8,7 @@ import { onboardingSchema } from '@/schema/onboarding'
 import type { UserProfile } from '../../../../../shared/types/api'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
-import { getRouteApi, useRouter } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import { LogOut, User } from 'lucide-react'
 import { toast } from 'sonner'
 import type z from 'zod'
@@ -17,13 +17,11 @@ const appRoute = getRouteApi('/app')
 
 export default function Settings() {
   const { session, logout } = useAuthContext()
-  const router = useRouter()
-  const profile = appRoute.useLoaderData() as UserProfile | null
+  const { profile } = appRoute.useRouteContext() as { profile: UserProfile | null }
 
   const handleLogout = async () => {
     await logout()
-    await router.invalidate()
-    router.navigate({ to: '/' })
+    window.location.href = '/'
   }
 
   const { mutateAsync: saveProfile, isPending } = useMutation({
@@ -52,8 +50,7 @@ export default function Settings() {
         .toLowerCase().replace(/ /g, '-')}`
       const payload = onboardingSchema.parse({ ...values.value, industry: formattedIndustry })
       await saveProfile(payload)
-        .then(async () => {
-          await router.invalidate()
+        .then(() => {
           toast.success('Profile updated')
         })
         .catch(() => toast.error('Failed to update profile'))
