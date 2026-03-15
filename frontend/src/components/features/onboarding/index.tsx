@@ -7,7 +7,6 @@ import { api } from '@/lib/api'
 import { onboardingSchema } from '@/schema/onboarding'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
-import { useRouter } from '@tanstack/react-router'
 import { BookOpen, Brain, FileText, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -38,7 +37,6 @@ const STEPS = [
 ]
 
 const Onboarding = () => {
-  const router = useRouter()
   const [step, setStep] = useState(0)
   const currentStep = STEPS[step]
 
@@ -70,9 +68,8 @@ const Onboarding = () => {
         industry: formattedIndustry,
       })
       await onboard(payload)
-        .then(async () => {
-          await router.invalidate()
-          router.navigate({ to: '/app' })
+        .then(() => {
+          window.location.href = '/app'
         })
         .catch(() => {
           toast.error('Something went wrong. Please try again.')

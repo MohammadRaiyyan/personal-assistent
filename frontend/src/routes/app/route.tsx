@@ -29,6 +29,10 @@ export const Route = createFileRoute('/app')({
       if ((e as { status?: number })?.status === 401) {
         throw redirect({ to: '/auth/login' })
       }
+      // Any other error (500, network) — redirect to onboarding as safe default
+      if (location.pathname !== '/app/onboarding') {
+        throw redirect({ to: '/app/onboarding' })
+      }
       return { profile: null as UserProfile | null }
     }
   },
